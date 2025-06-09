@@ -14,6 +14,7 @@ from pynput.mouse import Button, Listener as MouseListener
 from pynput.keyboard import Listener as KeyboardListener
 import sys
 import os
+import argparse
 
 class ActivityMonitor:
     def __init__(self, idle_threshold_minutes=3):
@@ -161,21 +162,68 @@ class ActivityMonitor:
         
         print("Activity monitor stopped.")
 
+def parse_arguments():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(
+        description="Drinkingbird - System Activity Monitor & Keep-Alive Tool",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  drinkingbird                    # Use default 3-minute threshold
+  drinkingbird -t 5              # Set 5-minute idle threshold
+  drinkingbird --threshold 1.5   # Set 1.5-minute idle threshold
+  drinkingbird --help            # Show this help message
+
+The program monitors keyboard and mouse activity and moves the mouse
+slightly when idle for the specified duration to prevent system idle status.
+Press Ctrl+C to stop the monitor.
+        """
+    )
+    
+    parser.add_argument(
+        '-t', '--threshold',
+        type=float,
+        default=3.0,
+        metavar='MINUTES',
+        help='Idle threshold in minutes before mouse movement (default: 3.0)'
+    )
+    
+    parser.add_argument(
+        '-v', '--version',
+        action='version',
+        version='Drinkingbird 1.0.0'
+    )
+    
+    return parser.parse_args()
+
 def main():
     """Main function"""
     try:
+        # Parse command line arguments
+        args = parse_arguments()
+        
+        # Validate threshold
+        if args.threshold <= 0:
+            print("Error: Threshold must be greater than 0")
+            sys.exit(1)
+        if args.threshold < 0.1:
+            print("Warning: Very low threshold may cause excessive mouse movement")
+        
         # Check if running with appropriate permissions
         if os.name == 'posix' and os.geteuid() != 0:
             print("Note: You may need to run with appropriate permissions if mouse control doesn't work.")
             
         # Create and start activity monitor
-        monitor = ActivityMonitor(idle_threshold_minutes=3)
+        monitor = ActivityMonitor(idle_threshold_minutes=args.threshold)
         monitor.start_monitoring()
         
     except ImportError as e:
         print(f"Error: Missing required library. Please install with:")
         print("pip install pynput")
         sys.exit(1)
+    except KeyboardInterrupt:
+        print("\nExiting...")
+        sys.exit(0)
     except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)

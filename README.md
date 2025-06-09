@@ -73,18 +73,59 @@ python3 drinkingbird.py
 ### Basic Usage
 
 ```bash
+# Use default 3-minute threshold
 drinkingbird
+
+# Set custom threshold (5 minutes)
+drinkingbird -t 5
+
+# Set threshold with decimal (1.5 minutes)
+drinkingbird --threshold 1.5
+
+# Show help
+drinkingbird --help
+
+# Show version
+drinkingbird --version
 ```
 
 ### Sample Output
 
 ```
 Starting activity monitor...
-Idle threshold: 3.0 minutes
+Idle threshold: 5.0 minutes
 Press Ctrl+C to stop
 
-[14:32:15] Last active: 14:32:15 (idle for 45s) Threshold: 180s
-[14:35:16] Mouse moved to prevent idle (next auto-move in 30s)
+[14:32:15] Last active: 14:32:15 (idle for 45s) Threshold: 300s
+[14:37:16] Mouse moved to prevent idle (next auto-move in 30s)
+```
+
+### Command Line Options
+
+```bash
+drinkingbird --help
+```
+
+```
+usage: drinkingbird [-h] [-t MINUTES] [-v]
+
+Drinkingbird - System Activity Monitor & Keep-Alive Tool
+
+options:
+  -h, --help            show this help message and exit
+  -t MINUTES, --threshold MINUTES
+                        Idle threshold in minutes before mouse movement (default: 3.0)
+  -v, --version         show program's version number and exit
+
+Examples:
+  drinkingbird                    # Use default 3-minute threshold
+  drinkingbird -t 5              # Set 5-minute idle threshold
+  drinkingbird --threshold 1.5   # Set 1.5-minute idle threshold
+  drinkingbird --help            # Show this help message
+
+The program monitors keyboard and mouse activity and moves the mouse
+slightly when idle for the specified duration to prevent system idle status.
+Press Ctrl+C to stop the monitor.
 ```
 
 ### How It Works
@@ -144,13 +185,25 @@ sudo dpkg -i drinkingbird_1.0.0_all.deb
 
 ## ⚙️ Configuration
 
-Currently, the idle threshold is set to 3 minutes by default. To modify:
+### Command Line Configuration
 
-1. Edit `drinkingbird.py`
-2. Change the `idle_threshold_minutes` parameter in the `ActivityMonitor` constructor
-3. Rebuild the package
+The idle threshold can be configured via command line arguments:
 
-Future versions may include command-line configuration options.
+```bash
+# Set different thresholds
+drinkingbird -t 1     # 1 minute
+drinkingbird -t 5     # 5 minutes  
+drinkingbird -t 0.5   # 30 seconds
+drinkingbird -t 10    # 10 minutes
+```
+
+### Advanced Configuration
+
+For other settings, you can modify the source code:
+
+- **Cooldown period**: Edit `auto_move_cooldown` in `ActivityMonitor.__init__()`
+- **Mouse movement distance**: Modify the pixel offset in `move_mouse_slightly()`
+- **Movement threshold**: Adjust `mouse_move_threshold` for activity detection
 
 ## 🔍 Technical Details
 
