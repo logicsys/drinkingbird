@@ -14,6 +14,7 @@ Drinkingbird is a lightweight Python application that monitors your system activ
 - 📊 **Live Status Display** - Shows current activity status and idle time
 - 🛡️ **Smart Detection** - Filters out system noise and micro-movements
 - 🔄 **Cooldown System** - Prevents excessive mouse movements
+- ⏰ **Working Hours** - Restrict activity to specific time periods
 - 🚫 **Clean Shutdown** - Graceful exit with Ctrl+C
 
 ## 🚀 Quick Start
@@ -82,6 +83,15 @@ drinkingbird -t 5
 # Set threshold with decimal (1.5 minutes)
 drinkingbird --threshold 1.5
 
+# Set working hours (9 AM to 5 PM)
+drinkingbird --start 9 --end 17
+
+# Set precise working hours with minutes
+drinkingbird --start 09:30 --end 17:30
+
+# Combine threshold and working hours
+drinkingbird -t 2 --start 8 --end 18
+
 # Show help
 drinkingbird --help
 
@@ -94,10 +104,28 @@ drinkingbird --version
 ```
 Starting activity monitor...
 Idle threshold: 5.0 minutes
+Working hours: 09:00 - 17:00
+✅ Currently within working hours - monitoring active
 Press Ctrl+C to stop
 
-[14:32:15] Last active: 14:32:15 (idle for 45s) Threshold: 300s
+[14:32:15] Last active: 14:32:15 (idle for 45s) Threshold: 300s Status: ACTIVE
 [14:37:16] Mouse moved to prevent idle (next auto-move in 30s)
+```
+
+### Working Hours Examples
+
+```bash
+# Standard business hours
+drinkingbird --start 9 --end 17
+
+# Early bird schedule  
+drinkingbird --start 7 --end 15
+
+# Night shift (22:00 to 06:00 next day)
+drinkingbird --start 22 --end 6
+
+# Precise timing with minutes
+drinkingbird --start 08:30 --end 17:45
 ```
 
 ### Command Line Options
@@ -115,16 +143,21 @@ options:
   -h, --help            show this help message and exit
   -t MINUTES, --threshold MINUTES
                         Idle threshold in minutes before mouse movement (default: 3.0)
+  --start TIME          Working hours start time (e.g., "9", "09:00", "09:30")
+  --end TIME            Working hours end time (e.g., "17", "17:00", "17:30")
   -v, --version         show program's version number and exit
 
 Examples:
-  drinkingbird                    # Use default 3-minute threshold
-  drinkingbird -t 5              # Set 5-minute idle threshold
-  drinkingbird --threshold 1.5   # Set 1.5-minute idle threshold
-  drinkingbird --help            # Show this help message
+  drinkingbird                              # Default settings
+  drinkingbird -t 5                        # 5-minute idle threshold
+  drinkingbird --threshold 1.5             # 1.5-minute threshold
+  drinkingbird --start 9 --end 17          # Work 9 AM to 5 PM
+  drinkingbird --start 09:30 --end 17:30   # Work 9:30 AM to 5:30 PM
+  drinkingbird -t 2 --start 8 --end 18     # 2-minute threshold, 8 AM to 6 PM
 
 The program monitors keyboard and mouse activity and moves the mouse
 slightly when idle for the specified duration to prevent system idle status.
+Working hours restrict when mouse movement occurs.
 Press Ctrl+C to stop the monitor.
 ```
 
@@ -195,6 +228,11 @@ drinkingbird -t 1     # 1 minute
 drinkingbird -t 5     # 5 minutes  
 drinkingbird -t 0.5   # 30 seconds
 drinkingbird -t 10    # 10 minutes
+
+# Working hours examples
+drinkingbird --start 9 --end 17           # 9 AM to 5 PM
+drinkingbird --start 08:30 --end 16:30    # 8:30 AM to 4:30 PM
+drinkingbird --start 22 --end 6           # Night shift: 10 PM to 6 AM
 ```
 
 ### Advanced Configuration

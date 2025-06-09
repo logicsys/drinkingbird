@@ -7,7 +7,7 @@ set -e
 
 # Package information
 PACKAGE_NAME="drinkingbird"
-VERSION="1.0.0"
+VERSION="1.0.2"
 ARCHITECTURE="all"
 MAINTAINER="User <user@example.com>"
 DESCRIPTION="System activity monitor that prevents idle status by moving mouse"
