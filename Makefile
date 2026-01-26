@@ -5,7 +5,7 @@ VERSION = 1.0.2
 ARCHITECTURE = all
 DEB_FILE = $(PACKAGE_NAME)_$(VERSION)_$(ARCHITECTURE).deb
 
-.PHONY: all build install uninstall clean test help
+.PHONY: all build install uninstall clean test help windows windows-clean
 
 all: build
 
@@ -24,8 +24,8 @@ uninstall:
 
 clean:
 	@echo "Cleaning build artifacts..."
-	@rm -rf build/
-	@rm -f *.deb
+	@rm -rf build/ dist/ __pycache__/ venv-build/
+	@rm -f *.deb *.spec.bak
 
 test:
 	@echo "Testing drinkingbird installation..."
@@ -45,4 +45,18 @@ help:
 	@echo "Usage examples:"
 	@echo "  make build    # Build the .deb package"
 	@echo "  make install  # Build and install"
-	@echo "  make clean    # Clean up build files" 
+	@echo "  make clean    # Clean up build files"
+	@echo ""
+	@echo "Windows targets:"
+	@echo "  make windows       # Build Windows executable (requires PyInstaller)"
+	@echo "  make windows-clean # Clean Windows build artifacts"
+
+# Windows build targets
+windows:
+	@echo "Building Windows executable..."
+	@python3 build-windows.py --spec
+
+windows-clean:
+	@echo "Cleaning Windows build artifacts..."
+	@rm -rf build/ dist/ __pycache__/ venv-build/
+	@rm -f *.spec.bak 
