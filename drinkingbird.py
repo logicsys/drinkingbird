@@ -16,6 +16,33 @@ import sys
 import os
 import argparse
 
+# Windows-specific imports for preventing system idle
+if sys.platform == 'win32':
+    import ctypes
+
+    # Windows execution state flags
+    ES_CONTINUOUS = 0x80000000
+    ES_SYSTEM_REQUIRED = 0x00000001
+    ES_DISPLAY_REQUIRED = 0x00000002
+
+    def prevent_sleep():
+        """Tell Windows to keep the system and display awake"""
+        ctypes.windll.kernel32.SetThreadExecutionState(
+            ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED
+        )
+
+    def allow_sleep():
+        """Allow Windows to sleep normally again"""
+        ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS)
+else:
+    def prevent_sleep():
+        """No-op on non-Windows systems"""
+        pass
+
+    def allow_sleep():
+        """No-op on non-Windows systems"""
+        pass
+
 class ActivityMonitor:
     def __init__(self, idle_threshold_minutes=3, start_time=None, end_time=None):
         self.last_activity = datetime.now()
@@ -104,23 +131,26 @@ class ActivityMonitor:
     def move_mouse_slightly(self):
         """Move mouse by 1 pixel and back to simulate activity"""
         current_pos = self.mouse_controller.position
-        
+
         # Set flag to ignore our automated movements
         self.ignore_next_mouse_move = True
-        
+
         # Move mouse 1 pixel right and down
         self.mouse_controller.position = (current_pos[0] + 1, current_pos[1] + 1)
         time.sleep(0.1)
-        
+
         # Set flag again for the return movement
         self.ignore_next_mouse_move = True
-        
+
         # Move mouse back to original position
         self.mouse_controller.position = current_pos
-        
+
+        # On Windows, also call the API to prevent sleep
+        prevent_sleep()
+
         # Update the last auto move time
         self.last_auto_move = datetime.now()
-        
+
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Mouse moved to prevent idle (next auto-move in {self.auto_move_cooldown.seconds}s)")
         
     def display_status(self):
@@ -198,7 +228,10 @@ class ActivityMonitor:
         # Stop listeners
         mouse_listener.stop()
         keyboard_listener.stop()
-        
+
+        # Restore normal sleep behavior on exit
+        allow_sleep()
+
         print("Activity monitor stopped.")
 
 def parse_time_string(time_str):
