@@ -16,6 +16,7 @@ import sys
 import os
 import argparse
 
+
 # Windows-specific imports for preventing system idle
 if sys.platform == 'win32':
     import ctypes
