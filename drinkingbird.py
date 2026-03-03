@@ -11,7 +11,7 @@ import threading
 from datetime import datetime, timedelta
 from pynput import mouse, keyboard
 from pynput.mouse import Button, Listener as MouseListener
-from pynput.keyboard import Listener as KeyboardListener
+from pynput.keyboard import Key, Controller as KeyboardController, Listener as KeyboardListener
 import sys
 import os
 import argparse
@@ -50,7 +50,9 @@ class ActivityMonitor:
         self.idle_threshold = timedelta(minutes=idle_threshold_minutes)
         self.running = True
         self.mouse_controller = mouse.Controller()
+        self.keyboard_controller = KeyboardController()
         self.ignore_next_mouse_move = False
+        self.ignore_next_key_press = False
         self.last_mouse_pos = self.mouse_controller.position
         self.mouse_move_threshold = 3  # Minimum pixels to consider as intentional movement
         self.last_auto_move = None  # Track when we last moved the mouse automatically
@@ -86,6 +88,10 @@ class ActivityMonitor:
         
     def on_key_press(self, key):
         """Called when a key is pressed"""
+        # Ignore if this is our automated key press
+        if self.ignore_next_key_press:
+            self.ignore_next_key_press = False
+            return
         self.update_activity()
         
     def update_activity(self):
@@ -130,7 +136,7 @@ class ActivityMonitor:
         return time_since_last_move >= self.auto_move_cooldown
         
     def move_mouse_slightly(self):
-        """Move mouse by 1 pixel and back to simulate activity"""
+        """Move mouse by 1 pixel and back, and press F15 to simulate activity"""
         current_pos = self.mouse_controller.position
 
         # Set flag to ignore our automated movements
@@ -146,13 +152,23 @@ class ActivityMonitor:
         # Move mouse back to original position
         self.mouse_controller.position = current_pos
 
+        # Also simulate a key press (F15 is typically unused and won't interfere)
+        # This helps with applications that specifically detect keyboard activity
+        self.ignore_next_key_press = True
+        try:
+            self.keyboard_controller.press(Key.f15)
+            self.keyboard_controller.release(Key.f15)
+        except Exception:
+            # F15 may not be available on all systems, that's okay
+            pass
+
         # On Windows, also call the API to prevent sleep
         prevent_sleep()
 
         # Update the last auto move time
         self.last_auto_move = datetime.now()
 
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] Mouse moved to prevent idle (next auto-move in {self.auto_move_cooldown.seconds}s)")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] Activity simulated to prevent idle (next in {self.auto_move_cooldown.seconds}s)")
         
     def display_status(self):
         """Display current activity status"""
@@ -160,7 +176,7 @@ class ActivityMonitor:
             try:
                 current_time = datetime.now()
                 idle_time = self.get_idle_time()
-                
+
                 # Build status message
                 status_parts = [
                     f"[{current_time.strftime('%H:%M:%S')}]",
@@ -168,20 +184,25 @@ class ActivityMonitor:
                     f"(idle for {int(idle_time.total_seconds())}s)",
                     f"Threshold: {int(self.idle_threshold.total_seconds())}s"
                 ]
-                
+
                 # Add working hours status if configured
                 if self.start_time is not None and self.end_time is not None:
                     working_status = "ACTIVE" if self.is_within_working_hours() else "OUTSIDE HOURS"
                     status_parts.append(f"Status: {working_status}")
-                
+
                 # Clear the line and print status
                 print(f"\r{' '.join(status_parts)}", end="", flush=True)
-                
+
+                # On Windows, continuously call prevent_sleep to keep the system awake
+                # This needs to be called periodically, not just once
+                if self.is_within_working_hours():
+                    prevent_sleep()
+
                 # Check if we need to move mouse (with cooldown)
                 if self.should_auto_move():
                     print()  # New line before the action message
                     self.move_mouse_slightly()
-                    
+
                 time.sleep(1)  # Update every second
                 
             except KeyboardInterrupt:

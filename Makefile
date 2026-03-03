@@ -1,7 +1,7 @@
 # Makefile for drinkingbird Debian package
 
 PACKAGE_NAME = drinkingbird
-VERSION = 1.0.5
+VERSION = 1.0.6
 ARCHITECTURE = all
 DEB_FILE = $(PACKAGE_NAME)_$(VERSION)_$(ARCHITECTURE).deb
 
